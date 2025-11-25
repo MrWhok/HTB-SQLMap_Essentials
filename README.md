@@ -481,16 +481,14 @@
     ```
     ![alt text](<Assets/Skill Assesment - 1.png>)
 
-    Based on that, the type of it is time-based blind (--technique=T). Not only that, i also found this warning.
-
-    ![alt text](<Assets/Skill Assesment - 2.png>)
+    Based on that, the type of it is time-based blind (--technique=T). Not only that, i also found a warning that we need to try **--tamper=between** flag.
 
     Based on those information, i rerun the command.
 
     ```bash
     sqlmap -r req.txt --dump --batch --technique=T --tamper=between --no-cast --flush-session
     ```
-    ![alt text](<Assets/Skill Assesment - 3.png>)
+    ![alt text](<Assets/Skill Assesment - 2.png>)
 
     We can see that it has interesting table name (final_flag table in the production database). Then, i tried to retrive the data from it.
 
